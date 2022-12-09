@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="dslab.transfer.TransferServerProtocolTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2022-11-16T20:33:11" hostname="DESKTOP-TGQ1M7K" time="6.03">
+  <properties/>
+  <testcase name="defaultDmtpInteractionTest" classname="dslab.transfer.TransferServerProtocolTest" time="3.01"/>
+  <testcase name="sendWithoutRecipient_returnsErrorOnSend" classname="dslab.transfer.TransferServerProtocolTest" time="3.019"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[Nov. 16, 2022 9:33:11 NACHM. dslab.transfer.TransferServerProtocolTest setUp
+INFORMATION: Waiting for server socket to appear
+Nov. 16, 2022 9:33:14 NACHM. dslab.transfer.TransferServerProtocolTest setUp
+INFORMATION: Waiting for server socket to appear
+]]></system-err>
+</testsuite>

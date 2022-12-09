@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="dslab.mailbox.MailboxServerProtocolTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2022-11-16T20:32:26" hostname="DESKTOP-TGQ1M7K" time="13.142">
+  <properties/>
+  <testcase name="acceptDmtpMessage_listDmapMessage" classname="dslab.mailbox.MailboxServerProtocolTest" time="4.087"/>
+  <testcase name="loginAndLogout_withValidLogin" classname="dslab.mailbox.MailboxServerProtocolTest" time="3.019"/>
+  <testcase name="dmtpMessage_withUnknownRecipient_returnsError" classname="dslab.mailbox.MailboxServerProtocolTest" time="3.018"/>
+  <testcase name="login_withInvalidLogin_returnsError" classname="dslab.mailbox.MailboxServerProtocolTest" time="3.017"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[Nov. 16, 2022 9:32:26 NACHM. dslab.mailbox.MailboxServerProtocolTest setUp
+INFORMATION: Waiting for server sockets to appear
+Nov. 16, 2022 9:32:30 NACHM. dslab.mailbox.MailboxServerProtocolTest setUp
+INFORMATION: Waiting for server sockets to appear
+Nov. 16, 2022 9:32:33 NACHM. dslab.mailbox.MailboxServerProtocolTest setUp
+INFORMATION: Waiting for server sockets to appear
+Nov. 16, 2022 9:32:37 NACHM. dslab.mailbox.MailboxServerProtocolTest setUp
+INFORMATION: Waiting for server sockets to appear
+]]></system-err>
+</testsuite>

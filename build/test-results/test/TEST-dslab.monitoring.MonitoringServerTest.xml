@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="dslab.monitoring.MonitoringServerTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2022-11-16T20:33:05" hostname="DESKTOP-TGQ1M7K" time="6.015">
+  <properties/>
+  <testcase name="runAndShutdownMonitoringServer_createsAndStopsUdpSocketCorrectly" classname="dslab.monitoring.MonitoringServerTest" time="6.015"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[Nov. 16, 2022 9:33:05 NACHM. dslab.monitoring.MonitoringServerTest runAndShutdownMonitoringServer_createsAndStopsUdpSocketCorrectly
+INFORMATION: Starting thread with component dslab.monitoring.MonitoringServer@6e1164d2
+Nov. 16, 2022 9:33:08 NACHM. dslab.monitoring.MonitoringServerTest runAndShutdownMonitoringServer_createsAndStopsUdpSocketCorrectly
+INFORMATION: Trying to create socket on port 10828
+Nov. 16, 2022 9:33:08 NACHM. dslab.monitoring.MonitoringServerTest runAndShutdownMonitoringServer_createsAndStopsUdpSocketCorrectly
+INFORMATION: Shutting down component dslab.monitoring.MonitoringServer@6e1164d2
+Nov. 16, 2022 9:33:11 NACHM. dslab.monitoring.MonitoringServerTest runAndShutdownMonitoringServer_createsAndStopsUdpSocketCorrectly
+INFORMATION: Waiting for thread to stop for component dslab.monitoring.MonitoringServer@6e1164d2
+]]></system-err>
+</testsuite>
