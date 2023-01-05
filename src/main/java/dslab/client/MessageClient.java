@@ -21,9 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.*;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
@@ -149,7 +147,44 @@ public class MessageClient implements IMessageClient, Runnable {
     @Override
     public void inbox() {
         //list+show
+        try {
+            List<String> emails = new ArrayList<String>();
+            List<String> emailDetails = new ArrayList<String>();
+            String input = "";
 
+            writer.write(encrypt("list"));
+
+            while (!input.equals("ok")) {
+                input = decrypt(reader.read());
+
+                if (!input.equals("ok")) {
+                    emails.add(input);
+                    shell.out().println(input);
+                }
+            }
+            //shell.out().println(emails);
+            /*input = "";
+
+            for (String mail : emails) {
+                writer.write(encrypt("show " + mail.split("\\s")[0]));
+                shell.out().println(mail.split("\\s")[0]);
+                while (!input.split("\\s")[0].equals("data")) {
+                    input = decrypt(reader.read());
+                    emailDetails.add(input);
+                }
+            }*/
+
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        } catch (InvalidKeyException e) {
+            shutdown();
+        } catch (IllegalBlockSizeException e) {
+            shutdown();
+        } catch (BadPaddingException e) {
+            shutdown();
+        } catch (InvalidAlgorithmParameterException e) {
+            shutdown();
+        }
     }
 
     @Command

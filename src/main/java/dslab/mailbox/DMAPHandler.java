@@ -142,6 +142,7 @@ public class DMAPHandler implements Runnable{
                         for (String message : messages) {
                             write(message);
                         }
+                        write("ok");
                         break;
                     case "delete":
                         if (!logged) {
