@@ -29,7 +29,7 @@ import dslab.util.Config;
  * client. Note that your mailbox server should run even if there is no naming service is available.
  */
 public class MessageClientMailboxTest {
-/*
+
     private static final Log LOG = LogFactory.getLog(MessageClientMailboxTest.class);
 
     @Rule
@@ -169,5 +169,5 @@ public class MessageClientMailboxTest {
                 containsString("nottrilliandata")
         )));
     }
-*/
+
 }

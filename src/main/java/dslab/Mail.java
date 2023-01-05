@@ -2,7 +2,15 @@ package dslab;
 
 import dslab.util.Writer;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
 import java.util.ArrayList;
+import java.util.Base64;
 
 public class Mail {
     private String sender;
@@ -69,6 +77,21 @@ public class Mail {
         writer.write("data " + data);
     }
 
+    public void toString(Writer writer, Cipher cipher, SecretKeySpec secretKeySpec, IvParameterSpec ivParameterSpec) throws IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException, InvalidKeyException {
+        cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, ivParameterSpec);
+        Base64.getEncoder().encodeToString(cipher.doFinal(("from " + sender).getBytes()));
 
-
+        writer.write(Base64.getEncoder().encodeToString(cipher.doFinal(("from " + sender).getBytes())));
+        String recipsString = "";
+        for (int i = 0; i < recipients.size(); i++) {
+            if (i == recipients.size()-1){
+                recipsString += recipients.get(i);
+            } else {
+                recipsString += recipients.get(i) + ",";
+            }
+        }
+        writer.write(Base64.getEncoder().encodeToString(cipher.doFinal(("to " + recipsString).getBytes())));
+        writer.write(Base64.getEncoder().encodeToString(cipher.doFinal(("subject " + subject).getBytes())));
+        writer.write(Base64.getEncoder().encodeToString(cipher.doFinal(("data " + data).getBytes())));
+    }
 }
