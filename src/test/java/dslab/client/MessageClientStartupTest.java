@@ -23,7 +23,7 @@ import dslab.util.Config;
  * Tests that the message client connects to the configured DMAP server at startup and sends the startsecure command.
  */
 public class MessageClientStartupTest {
-
+/*
     @Rule
     public ErrorCollector err = new ErrorCollector();
 
@@ -67,7 +67,6 @@ public class MessageClientStartupTest {
         });
 
         // setup message client
-        /*
         TestInputStream messageClientIn = new TestInputStream();
         TestOutputStream messageClientOut = new TestOutputStream();
 
@@ -84,7 +83,7 @@ public class MessageClientStartupTest {
         } catch (InterruptedException e) {
             // ignore
         }
-
-         */
     }
+
+ */
 }

@@ -49,7 +49,7 @@ public class MessageClient implements IMessageClient, Runnable {
     public void shutdown() {
 
     }
-/*
+ /*
     public static void main(String[] args) throws Exception {
         IMessageClient client = ComponentFactory.createMessageClient(args[0], System.in, System.out);
         client.run();
