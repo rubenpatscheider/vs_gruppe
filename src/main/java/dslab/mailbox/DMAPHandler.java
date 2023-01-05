@@ -1,13 +1,20 @@
 package dslab.mailbox;
 
 import dslab.Mail;
+import dslab.util.Keys;
 import dslab.util.Reader;
 import dslab.util.Writer;
 
+import javax.crypto.*;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.Socket;
+import java.security.*;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Properties;
 
 public class DMAPHandler implements Runnable{
@@ -19,6 +26,9 @@ public class DMAPHandler implements Runnable{
     private boolean serverUp = true;
     private String user;
     private boolean logged = false;
+    private Cipher cipherAES;
+    private SecretKeySpec secretKeySpec;
+    private IvParameterSpec ivParameterSpec;
 
     public DMAPHandler(Socket socket, MailboxServer mailbox) {
         this.socket = socket;
@@ -32,7 +42,7 @@ public class DMAPHandler implements Runnable{
             String msg;
             reader = new Reader(socket.getInputStream());
             writer = new Writer(socket.getOutputStream());
-            writer.write("ok DMAP");
+            writer.write("ok DMAP2.0");
 
             while (serverUp){
                 try {
@@ -61,6 +71,39 @@ public class DMAPHandler implements Runnable{
                         logged = true;
                         user = msgSplit[1];
                         writer.write("ok");
+                        break;
+                    case "startsecure":
+                        String response;
+
+                        writer.write("ok " + mailbox.componentId);
+                        response = reader.read();
+                        //System.out.println(response);
+                        File file = new File("keys/server/" + mailbox.componentId + ".der");
+                        PrivateKey key = Keys.readPrivateKey(file);
+                        Cipher c = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+                        c.init(Cipher.DECRYPT_MODE, key);
+                        //c.doFinal(response.getBytes());
+                        response = new String(c.doFinal(Base64.getDecoder().decode(response)));
+
+                        msgSplit = response.split("\\s");
+                        byte[] challenge = Base64.getDecoder().decode(msgSplit[1]);
+                        byte[] keyUser = Base64.getDecoder().decode(msgSplit[2]);
+                        byte[] iv = Base64.getDecoder().decode(msgSplit[3]);
+
+                        cipherAES = Cipher.getInstance("AES/CTR/NoPadding");
+                        secretKeySpec = new SecretKeySpec(keyUser, "AES");
+                        ivParameterSpec = new IvParameterSpec(iv);
+                        cipherAES.init(Cipher.ENCRYPT_MODE, secretKeySpec, ivParameterSpec);
+
+                        writer.write(Base64.getEncoder().encodeToString(cipherAES.doFinal(("ok " + Base64.getEncoder().encodeToString(challenge)).getBytes())));
+                        response = reader.read();
+                        response = decrypt(response);
+
+                        if (!response.equals("ok")) {
+                            shut();
+                        }
+                        System.out.println("funktioniert");
+
                         break;
                     case "show":
                         if (!logged) {
@@ -136,6 +179,18 @@ public class DMAPHandler implements Runnable{
             } else {
                 throw new UncheckedIOException("IOException DMAP-Handler", e);
             }
+        }catch (NoSuchAlgorithmException e) {
+            shut();
+        } catch (NoSuchPaddingException e) {
+            shut();
+        } catch (InvalidKeyException e) {
+            shut();
+        } catch (IllegalBlockSizeException e) {
+            shut();
+        } catch (BadPaddingException e) {
+            shut();
+        } catch (InvalidAlgorithmParameterException e) {
+            shut();
         }
 
     }
@@ -148,6 +203,16 @@ public class DMAPHandler implements Runnable{
     private boolean checkPassword(String name, String password) {
         Properties users = mailbox.getUsers();
         return users.getProperty(name).equals(password);
+    }
+
+    private String encrypt(String input) throws IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException, InvalidKeyException {
+        cipherAES.init(Cipher.DECRYPT_MODE, secretKeySpec, ivParameterSpec);
+        return Base64.getEncoder().encodeToString(cipherAES.doFinal(input.getBytes()));
+    }
+
+    private String decrypt(String input) throws IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException, InvalidKeyException {
+        cipherAES.init(Cipher.DECRYPT_MODE, secretKeySpec, ivParameterSpec);
+        return new String(cipherAES.doFinal(Base64.getDecoder().decode(input)));
     }
 
     public void shut() {

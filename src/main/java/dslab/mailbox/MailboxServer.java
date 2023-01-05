@@ -21,7 +21,7 @@ import dslab.util.Writer;
 public class MailboxServer implements IMailboxServer, Runnable {
 
     private volatile boolean serverUp = false;
-    private String componentId;
+    protected String componentId;
     private Config config;
     private Reader reader;
     private Writer writer;
