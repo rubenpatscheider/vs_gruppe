@@ -118,14 +118,13 @@ public class MessageClient implements IMessageClient, Runnable {
 
             if (Arrays.equals(challenge,challengeServer)) {
                 writer.write(encrypt("ok"));
-                shell.out().println("Es geht");
             } else {
                 shutdown();
             }
 
-            //shell.out().println(response);
 
-            //login
+            writer.write(encrypt("login " + config.getString("mailbox.user") + " " + config.getString("mailbox.password")));
+
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         } catch (NoSuchAlgorithmException e) {

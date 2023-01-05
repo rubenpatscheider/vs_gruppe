@@ -29,6 +29,7 @@ public class DMAPHandler implements Runnable{
     private Cipher cipherAES;
     private SecretKeySpec secretKeySpec;
     private IvParameterSpec ivParameterSpec;
+    private boolean secure = false;
 
     public DMAPHandler(Socket socket, MailboxServer mailbox) {
         this.socket = socket;
@@ -52,25 +53,29 @@ public class DMAPHandler implements Runnable{
                     break;
                 }
 
+                if(secure) {
+                    msg = decrypt(msg);
+                }
+
                 String[] msgSplit = msg.split("\\s");
 
                 switch (msgSplit[0]) {
                     case "login":
                         if (msgSplit.length < 3) {
-                            writer.write("error no user or password");
+                            write("error no user or password");
                             break;
                         }
                         if (!checkUser(msgSplit[1])) {
-                            writer.write("error unknown user");
+                            write("error unknown user");
                             break;
                         }
                         if (!checkPassword(msgSplit[1], msgSplit[2])) {
-                            writer.write("error wrong password");
+                            write("error wrong password");
                             break;
                         }
                         logged = true;
                         user = msgSplit[1];
-                        writer.write("ok");
+                        write("ok");
                         break;
                     case "startsecure":
                         String response;
@@ -102,73 +107,76 @@ public class DMAPHandler implements Runnable{
                         if (!response.equals("ok")) {
                             shut();
                         }
-                        System.out.println("funktioniert");
-
+                        secure = true;
                         break;
                     case "show":
                         if (!logged) {
-                            writer.write("error not logged in");
+                            write("error not logged in");
                             break;
                         }
                         if (msgSplit.length < 2) {
-                            writer.write("error no message id");
+                            write("error no message id");
                             break;
                         }
                         Mail tempMail = mailbox.getMail(user, Integer.parseInt(msgSplit[1]));
                         if (tempMail == null){
-                            writer.write("error unknown message id");
+                            write("error unknown message id");
                             break;
                         }
-                        tempMail.toString(writer);
+                        if (secure) {
+                            tempMail.toString(writer, cipherAES, secretKeySpec, ivParameterSpec);
+                        } else {
+                            tempMail.toString(writer);
+                        }
                         break;
                     case "list":
                         if (!logged) {
-                            writer.write("error not logged in");
+                            write("error not logged in");
                             break;
                         }
                         ArrayList<String> messages = mailbox.getMails(user);
                         if (messages.size() == 0) {
-                            writer.write("no messages for user " + user);
+                            write("no messages for user " + user);
                             break;
                         }
                         for (String message : messages) {
-                            writer.write(message);
+                            write(message);
                         }
                         break;
                     case "delete":
                         if (!logged) {
-                            writer.write("error not logged in");
+                            write("error not logged in");
                             break;
                         }
                         if (msgSplit.length < 2) {
-                            writer.write("error no message id");
+                            write("error no message id");
                             break;
                         }
                         Mail deleteMail = mailbox.deleteMail(user, Integer.parseInt(msgSplit[1]));
                         if (deleteMail == null) {
-                            writer.write("error unknown message id");
+                            write("error unknown message id");
                             break;
                         }
-                        writer.write("ok");
+                        write("ok");
                         break;
                     case "logout":
                         if (!logged) {
-                            writer.write("error not logged in");
+                            write("error not logged in");
                             break;
                         }
                         logged = false;
                         user = null;
-                        writer.write("ok");
+                        write("ok");
                         break;
                     case "quit":
                         serverUp = false;
                         logged = false;
                         user = null;
-                        writer.write("ok bye");
+                        write("ok bye");
                         shut();
                         break;
                     default:
-                        writer.write("error protocol error");
+                        write("error protocol error");
                         shut();
                 }
 
@@ -203,6 +211,14 @@ public class DMAPHandler implements Runnable{
     private boolean checkPassword(String name, String password) {
         Properties users = mailbox.getUsers();
         return users.getProperty(name).equals(password);
+    }
+
+    private void write(String input) throws InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException {
+        if(secure) {
+            writer.write(encrypt(input));
+        } else {
+            writer.write(input);
+        }
     }
 
     private String encrypt(String input) throws IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException, InvalidKeyException {
