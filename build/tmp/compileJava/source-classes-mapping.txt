@@ -1,92 +1,56 @@
 dslab/nameserver/Nameserver.java
  dslab.nameserver.Nameserver
-dslab/monitoring/MonitoringServer.java
- dslab.monitoring.MonitoringServer
-dslab/util/Config.java
- dslab.util.Config
 dslab/util/Writer.java
  dslab.util.Writer
-dslab/monitoring/IMonitoringServer.java
- dslab.monitoring.IMonitoringServer
 dslab/monitoring/MonitoringServer.java
  dslab.monitoring.MonitoringServer
 dslab/mailbox/IMailboxServer.java
  dslab.mailbox.IMailboxServer
 dslab/util/Keys.java
  dslab.util.Keys
-dslab/mailbox/DMTPListener.java
- dslab.mailbox.DMTPListener
-dslab/mailbox/DMTPHandler.java
- dslab.mailbox.DMTPHandler
-dslab/monitoring/IMonitoringServer.java
- dslab.monitoring.IMonitoringServer
-dslab/transfer/ITransferServer.java
- dslab.transfer.ITransferServer
-dslab/client/MessageClient.java
- dslab.client.MessageClient
-dslab/client/IMessageClient.java
- dslab.client.IMessageClient
-dslab/nameserver/INameserver.java
- dslab.nameserver.INameserver
-dslab/transfer/TransferClient.java
- dslab.transfer.TransferClient
-dslab/mailbox/MailboxServer.java
- dslab.mailbox.MailboxServer
-dslab/transfer/TransferHandler.java
- dslab.transfer.TransferHandler
-dslab/mailbox/DMAPHandler.java
- dslab.mailbox.DMAPHandler
-dslab/ComponentFactory.java
- dslab.ComponentFactory
-dslab/util/Reader.java
- dslab.util.Reader
-dslab/nameserver/INameserverRemote.java
- dslab.nameserver.INameserverRemote
-dslab/monitoring/UDPListener.java
- dslab.monitoring.UDPListener
-dslab/nameserver/InvalidDomainException.java
- dslab.nameserver.InvalidDomainException
-dslab/transfer/TransferServer.java
- dslab.transfer.TransferServer
 dslab/util/Config.java
  dslab.util.Config
 dslab/nameserver/AlreadyRegisteredException.java
  dslab.nameserver.AlreadyRegisteredException
-dslab/util/Keys.java
- dslab.util.Keys
+dslab/monitoring/IMonitoringServer.java
+ dslab.monitoring.IMonitoringServer
 dslab/transfer/ITransferServer.java
  dslab.transfer.ITransferServer
-dslab/util/Reader.java
- dslab.util.Reader
+dslab/nameserver/INameserverRemote.java
+ dslab.nameserver.INameserverRemote
 dslab/client/IMessageClient.java
  dslab.client.IMessageClient
+dslab/nameserver/INameserver.java
+ dslab.nameserver.INameserver
+dslab/nameserver/InvalidDomainException.java
+ dslab.nameserver.InvalidDomainException
 dslab/monitoring/UDPListener.java
  dslab.monitoring.UDPListener
+dslab/util/Reader.java
+ dslab.util.Reader
 dslab/transfer/TransferHandler.java
  dslab.transfer.TransferHandler
-dslab/transfer/TransferServerQueue.java
- dslab.transfer.TransferServerQueue
+dslab/mailbox/DMAPListener.java
+ dslab.mailbox.DMAPListener
 dslab/mailbox/DMTPListener.java
  dslab.mailbox.DMTPListener
 dslab/mailbox/DMTPHandler.java
  dslab.mailbox.DMTPHandler
 dslab/transfer/TransferServer.java
  dslab.transfer.TransferServer
-dslab/transfer/TransferClient.java
- dslab.transfer.TransferClient
-dslab/Mail.java
- dslab.Mail
-dslab/mailbox/MailboxServer.java
- dslab.mailbox.MailboxServer
-dslab/transfer/TransferListener.java
- dslab.transfer.TransferListener
 dslab/mailbox/DMAPHandler.java
  dslab.mailbox.DMAPHandler
-dslab/mailbox/DMAPListener.java
- dslab.mailbox.DMAPListener
+dslab/Mail.java
+ dslab.Mail
+dslab/transfer/TransferServerQueue.java
+ dslab.transfer.TransferServerQueue
+dslab/transfer/TransferListener.java
+ dslab.transfer.TransferListener
+dslab/mailbox/MailboxServer.java
+ dslab.mailbox.MailboxServer
+dslab/transfer/TransferClient.java
+ dslab.transfer.TransferClient
 dslab/ComponentFactory.java
  dslab.ComponentFactory
 dslab/client/MessageClient.java
  dslab.client.MessageClient
-dslab/transfer/TransferServerQueue.java
- dslab.transfer.TransferServerQueue

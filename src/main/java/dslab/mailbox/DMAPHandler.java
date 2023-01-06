@@ -8,9 +8,7 @@ import dslab.util.Writer;
 import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.File;
-import java.io.IOException;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.net.Socket;
 import java.security.*;
 import java.util.ArrayList;
@@ -20,8 +18,8 @@ import java.util.Properties;
 public class DMAPHandler implements Runnable{
 
     private Socket socket;
-    private Reader reader;
-    private Writer writer;
+    private BufferedReader reader;
+    private PrintWriter writer;
     private MailboxServer mailbox;
     private boolean serverUp = true;
     private String user;
@@ -41,13 +39,13 @@ public class DMAPHandler implements Runnable{
     public void run() {
         try {
             String msg;
-            reader = new Reader(socket.getInputStream());
-            writer = new Writer(socket.getOutputStream());
-            writer.write("ok DMAP2.0");
+            reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            writer = new PrintWriter(socket.getOutputStream(), true);
+            writer.println("ok DMAP2.0");
 
             while (serverUp){
                 try {
-                    msg = reader.read();
+                    msg = reader.readLine();
                     if(msg == null) break;
                 } catch (IOException e) {
                     break;
@@ -80,8 +78,8 @@ public class DMAPHandler implements Runnable{
                     case "startsecure":
                         String response;
 
-                        writer.write("ok " + mailbox.componentId);
-                        response = reader.read();
+                        writer.println("ok " + mailbox.componentId);
+                        response = reader.readLine();
                         //System.out.println(response);
                         File file = new File("keys/server/" + mailbox.componentId + ".der");
                         PrivateKey key = Keys.readPrivateKey(file);
@@ -100,8 +98,8 @@ public class DMAPHandler implements Runnable{
                         ivParameterSpec = new IvParameterSpec(iv);
                         cipherAES.init(Cipher.ENCRYPT_MODE, secretKeySpec, ivParameterSpec);
 
-                        writer.write(Base64.getEncoder().encodeToString(cipherAES.doFinal(("ok " + Base64.getEncoder().encodeToString(challenge)).getBytes())));
-                        response = reader.read();
+                        writer.println(Base64.getEncoder().encodeToString(cipherAES.doFinal(("ok " + Base64.getEncoder().encodeToString(challenge)).getBytes())));
+                        response = reader.readLine();
                         response = decrypt(response);
 
                         if (!response.equals("ok")) {
@@ -136,13 +134,16 @@ public class DMAPHandler implements Runnable{
                         }
                         ArrayList<String> messages = mailbox.getMails(user);
                         if (messages.size() == 0) {
-                            write("no messages for user " + user);
+                            write("error no messages for user " + user);
                             break;
                         }
+                        String output = "";
                         for (String message : messages) {
-                            write(message);
+                            output = output + message + "\r\n";
+                            //write(message);
                         }
-                        write("ok");
+                        output = output + "ok";
+                        write(output);
                         break;
                     case "delete":
                         if (!logged) {
@@ -216,9 +217,9 @@ public class DMAPHandler implements Runnable{
 
     private void write(String input) throws InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException {
         if(secure) {
-            writer.write(encrypt(input));
+            writer.println(encrypt(input));
         } else {
-            writer.write(input);
+            writer.println(input);
         }
     }
 
@@ -239,8 +240,13 @@ public class DMAPHandler implements Runnable{
                 socket.close();
             } catch (IOException e) {}
         }
-        reader.shut();
-        writer.shut();
+        try {
+            reader.close();
+            writer.close();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+
     }
 
 }

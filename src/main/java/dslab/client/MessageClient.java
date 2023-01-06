@@ -34,8 +34,8 @@ public class MessageClient implements IMessageClient, Runnable {
     private Shell shell;
     private Socket dmapSocket = null;
     private Socket dmtpSocket = null;
-    private Reader reader = null;
-    private Writer writer = null;
+    private BufferedReader reader = null;
+    private PrintWriter writer = null;
     private Cipher cipherAES;
     private SecretKeySpec secretKeySpec;
     private IvParameterSpec ivParameterSpec;
@@ -64,16 +64,16 @@ public class MessageClient implements IMessageClient, Runnable {
             String response;
             dmapSocket = new Socket(config.getString("mailbox.host"), config.getInt("mailbox.port"));
             //dmtpSocket = new Socket(config.getString("transfer.host"), config.getInt("transfer.port"));
-            reader = new Reader(dmapSocket.getInputStream());
-            writer = new Writer(dmapSocket.getOutputStream());
+            reader = new BufferedReader(new InputStreamReader(dmapSocket.getInputStream()));
+            writer = new PrintWriter(dmapSocket.getOutputStream(), true);
 
-            response = reader.read();
+            response = reader.readLine();
             if(!response.equals("ok DMAP2.0")) {
                 shutdown();
             }
 
-            writer.write("startsecure");
-            response = reader.read();
+            writer.println("startsecure");
+            response = reader.readLine();
             String[] msgSplit = response.split("\\s");
 
             if(!msgSplit[0].equals("ok") && msgSplit.length != 2) {
@@ -103,25 +103,29 @@ public class MessageClient implements IMessageClient, Runnable {
             c.init(Cipher.ENCRYPT_MODE, key);
             //c.doFinal(Base64.getDecoder().decode(answer));
             //System.out.println(Base64.getEncoder().encodeToString(c.doFinal(Base64.getDecoder().decode(answer))));
-            writer.write(Base64.getEncoder().encodeToString(c.doFinal(answer.getBytes())));
+            writer.println(Base64.getEncoder().encodeToString(c.doFinal(answer.getBytes())));
 
             cipherAES = Cipher.getInstance("AES/CTR/NoPadding");
             secretKeySpec = new SecretKeySpec(keyUser, "AES");
             ivParameterSpec = new IvParameterSpec(iv);
             cipherAES.init(Cipher.DECRYPT_MODE, secretKeySpec, ivParameterSpec);
 
-            response = reader.read();
+            response = reader.readLine();
             response = new String(cipherAES.doFinal(Base64.getDecoder().decode(response)));
             byte[] challengeServer = Base64.getDecoder().decode(response.split(" ")[1]);
 
             if (Arrays.equals(challenge,challengeServer)) {
-                writer.write(encrypt("ok"));
+                writer.println(encrypt("ok"));
             } else {
                 shutdown();
             }
 
+            writer.println(encrypt("login " + config.getString("mailbox.user") + " " + config.getString("mailbox.password")));
 
-            writer.write(encrypt("login " + config.getString("mailbox.user") + " " + config.getString("mailbox.password")));
+            response = decrypt(reader.readLine());
+            if (!response.equals("ok")) {
+                shutdown();
+            }
 
         } catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -148,31 +152,32 @@ public class MessageClient implements IMessageClient, Runnable {
     public void inbox() {
         //list+show
         try {
-            List<String> emails = new ArrayList<String>();
-            List<String> emailDetails = new ArrayList<String>();
-            String input = "";
+            List<String> index = new ArrayList<String>();
 
-            writer.write(encrypt("list"));
+            writer.println(encrypt("list"));
+            String input = decrypt(reader.readLine());
 
-            while (!input.equals("ok")) {
-                input = decrypt(reader.read());
+            if(input.split(" ")[0].equals("error")) {
+                shell.out().println(input);
+                return;
+            }
 
-                if (!input.equals("ok")) {
-                    emails.add(input);
-                    shell.out().println(input);
+            String[] inputSplit = input.split("\n");
+
+            for (String split : inputSplit) {
+                String[] details = split.split(" ");
+
+                if (details.length > 1) {
+                    index.add(details[0]);
                 }
             }
-            //shell.out().println(emails);
-            /*input = "";
 
-            for (String mail : emails) {
-                writer.write(encrypt("show " + mail.split("\\s")[0]));
-                shell.out().println(mail.split("\\s")[0]);
-                while (!input.split("\\s")[0].equals("data")) {
-                    input = decrypt(reader.read());
-                    emailDetails.add(input);
-                }
-            }*/
+            for (String i : index) {
+                writer.println(encrypt("show " + i));
+
+                String show = decrypt(reader.readLine());
+                shell.out().println(i + "\r\n" + show);
+            }
 
         } catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -218,8 +223,13 @@ public class MessageClient implements IMessageClient, Runnable {
             } catch (IOException ignored) {
             }
         }
-        reader.shut();
-        writer.shut();
+        try {
+            reader.close();
+            writer.close();
+        } catch (IOException e) {
+            throw new UncheckedIOException("IOException MessageClient", e);
+        }
+
         throw new StopShellException();
     }
 

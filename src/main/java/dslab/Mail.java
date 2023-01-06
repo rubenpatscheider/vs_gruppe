@@ -7,6 +7,7 @@ import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.PrintWriter;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.util.ArrayList;
@@ -62,26 +63,27 @@ public class Mail {
         return this.recipients;
     }
 
-    public void toString(Writer writer){
-        writer.write("from " + sender);
+    public void toString(PrintWriter writer){
         String recipsString = "";
         for (int i = 0; i < recipients.size(); i++) {
-            if (i == recipients.size()-1){
+            if (i == recipients.size() - 1) {
                 recipsString += recipients.get(i);
             } else {
                 recipsString += recipients.get(i) + ",";
             }
         }
-        writer.write("to " + recipsString);
-        writer.write("subject " + subject);
-        writer.write("data " + data);
+        writer.println("from " + sender + "\n\r" + "to " + recipsString +
+                "\n\r" + "subject " + subject + "\n\r" + "data " + data);
+
+        //writer.write("from " + sender);
+        //writer.write("to " + recipsString);
+        //writer.write("subject " + subject);
+        //writer.write("data " + data);
     }
 
-    public void toString(Writer writer, Cipher cipher, SecretKeySpec secretKeySpec, IvParameterSpec ivParameterSpec) throws IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException, InvalidKeyException {
+    public void toString(PrintWriter writer, Cipher cipher, SecretKeySpec secretKeySpec, IvParameterSpec ivParameterSpec) throws IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException, InvalidKeyException {
         cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, ivParameterSpec);
-        Base64.getEncoder().encodeToString(cipher.doFinal(("from " + sender).getBytes()));
 
-        writer.write(Base64.getEncoder().encodeToString(cipher.doFinal(("from " + sender).getBytes())));
         String recipsString = "";
         for (int i = 0; i < recipients.size(); i++) {
             if (i == recipients.size()-1){
@@ -90,8 +92,13 @@ public class Mail {
                 recipsString += recipients.get(i) + ",";
             }
         }
-        writer.write(Base64.getEncoder().encodeToString(cipher.doFinal(("to " + recipsString).getBytes())));
-        writer.write(Base64.getEncoder().encodeToString(cipher.doFinal(("subject " + subject).getBytes())));
-        writer.write(Base64.getEncoder().encodeToString(cipher.doFinal(("data " + data).getBytes())));
+
+        writer.println(Base64.getEncoder().encodeToString(cipher.doFinal(("from " + sender + "\n\r" + "to " + recipsString +
+                "\n\r" + "subject " + subject + "\n\r" + "data " + data).getBytes())));
+
+        //writer.write(Base64.getEncoder().encodeToString(cipher.doFinal(("from " + sender).getBytes())));
+        //writer.write(Base64.getEncoder().encodeToString(cipher.doFinal(("to " + recipsString).getBytes())));
+        //writer.write(Base64.getEncoder().encodeToString(cipher.doFinal(("subject " + subject).getBytes())));
+        //writer.write(Base64.getEncoder().encodeToString(cipher.doFinal(("data " + data).getBytes())));
     }
 }
