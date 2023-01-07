@@ -13,6 +13,7 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.security.*;
 import java.util.*;
 import dslab.util.Reader;
@@ -29,6 +30,8 @@ public class MessageClient implements IMessageClient, Runnable {
     private Socket dmtpSocket = null;
     private BufferedReader dmapReader = null;
     private PrintWriter dmapWriter = null;
+    private BufferedReader dmtpReader = null;
+    private PrintWriter dmtpWriter = null;
     private Cipher cipherAES;
     private SecretKeySpec secretKeySpec;
     private IvParameterSpec ivParameterSpec;
@@ -56,7 +59,6 @@ public class MessageClient implements IMessageClient, Runnable {
         try {
             String response;
             dmapSocket = new Socket(config.getString("mailbox.host"), config.getInt("mailbox.port"));
-            //dmtpSocket = new Socket(config.getString("transfer.host"), config.getInt("transfer.port"));
             dmapReader = new BufferedReader(new InputStreamReader(dmapSocket.getInputStream()));
             dmapWriter = new PrintWriter(dmapSocket.getOutputStream(), true);
 
@@ -242,59 +244,63 @@ public class MessageClient implements IMessageClient, Runnable {
 
         try {
             dmtpSocket = new Socket(config.getString("transfer.host"), config.getInt("transfer.port"));
-            Reader dmtpReader = new Reader(dmtpSocket.getInputStream());
-            Writer dmtpWriter = new Writer(dmtpSocket.getOutputStream());
+            dmtpReader = new BufferedReader(new InputStreamReader(dmtpSocket.getInputStream()));
+            dmtpWriter = new PrintWriter(dmtpSocket.getOutputStream(), true);
 
-            String response = dmtpReader.read();
-            if(!response.equals("ok DMTP2.0")) throw new Exception();
+            String response = dmtpReader.readLine();
+            if(!response.equals("ok DMTP2.0")) shell.err().println("error ok DMTP2.0");
 
-            dmtpWriter.write("begin");
-            response = dmtpReader.read();
-            if(!response.equals("ok")) throw new Exception();
+            dmtpWriter.println("begin");
+            response = dmtpReader.readLine();
+            if(!response.equals("ok")) shell.err().println("error begin");
 
-            dmtpWriter.write("from " + config.getString("transfer.email"));
-            response = dmtpReader.read();
-            if(!response.equals("ok")) throw new Exception();
+            dmtpWriter.println("from " + mail.getSender());
+            response = dmtpReader.readLine();
+            if(!response.equals("ok")) shell.err().println("error from");
 
-            dmtpWriter.write("to " + to);
-            response = dmtpReader.read();
-            if(!response.equals("ok")) throw new Exception();
+            dmtpWriter.println("to " + mail.recipientsToString());
+            response = dmtpReader.readLine();
+            if(!response.equals("ok " + mail.getRecipients().size())) shell.err().println("error to");
 
-            dmtpWriter.write("subject " + subject);
-            response = dmtpReader.read();
-            if(!response.equals("ok")) throw new Exception();
+            dmtpWriter.println("subject " + mail.getSubject());
+            response = dmtpReader.readLine();
+            if(!response.equals("ok")) shell.err().println("error subject");
 
-            dmtpWriter.write("data " + data);
-            response = dmtpReader.read();
-            if(!response.equals("ok")) throw new Exception();
+            dmtpWriter.println("data " + mail.getData());
+            response = dmtpReader.readLine();
+            if(!response.equals("ok")) shell.err().println("error data");
 
-            dmtpWriter.write("hash " + mail.getHash());
-            response = dmtpReader.read();
-            if(!response.equals("ok")) throw new Exception();
+            dmtpWriter.println("hash " + mail.getHash());
+            response = dmtpReader.readLine();
+            if(!response.equals("ok")) shell.err().println("error hash");
 
-            dmtpWriter.write("send");
-            response = dmtpReader.read();
-            if(!response.equals("ok")) throw new Exception();
+            dmtpWriter.println("send");
+            response = dmtpReader.readLine();
+            if(!response.equals("ok")) shell.err().println("error send");
 
-            dmtpWriter.write("quit");
-            response = dmtpReader.read();
-            if(!response.equals("ok bye")) throw new Exception();
+            dmtpWriter.println("quit");
+            response = dmtpReader.readLine();
+            if(!response.equals("ok bye")) shell.err().println("error quit");
 
             shell.out().println("ok");
 
         } catch (IOException e) {
-            e.printStackTrace();
-        } catch (Exception e) {
-            e.printStackTrace();
+            throw new UncheckedIOException(e);
+
         } finally {
             if(dmtpSocket != null){
                 try{
                     dmtpSocket.close();
-                } catch (IOException ignored) {
-
-                }
+                } catch (IOException ignored) {}
+            }
+            try {
+                dmtpReader.close();
+                dmtpWriter.close();
+            } catch (IOException e) {
+                throw new UncheckedIOException("IOException MessageClient", e);
             }
         }
+
     }
 
     @Command
