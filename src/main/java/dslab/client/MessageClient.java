@@ -168,6 +168,7 @@ public class MessageClient implements IMessageClient, Runnable {
                 dmapWriter.println(encrypt("show " + i));
 
                 String show = decrypt(dmapReader.readLine());
+                show = show.substring(0,show.length()-2);
                 shell.out().println(i + "\r\n" + show);
             }
 

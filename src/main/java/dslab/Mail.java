@@ -75,7 +75,7 @@ public class Mail {
         else hashline = "hash";
 
         writer.println("from " + sender + "\n\r" + "to " + recipientsToString() +
-                "\n\r" + "subject " + subject + "\n\r" + "data " + data + "\n\r" + hashline);
+                "\n\r" + "subject " + subject + "\n\r" + "data " + data + "\n\r" + hashline + "\n\r" + "ok");
     }
 
     public String recipientsToString(){
@@ -107,7 +107,7 @@ public class Mail {
         else hashline = "hash";
 
         writer.println(Base64.getEncoder().encodeToString(cipher.doFinal(("from " + sender + "\n\r" + "to " + recipientsToString() +
-                "\n\r" + "subject " + subject + "\n\r" + "data " + data  + "\n\r" + hashline).getBytes())));
+                "\n\r" + "subject " + subject + "\n\r" + "data " + data  + "\n\r" + hashline + "\n\r" + "ok").getBytes())));
 
         //writer.write(Base64.getEncoder().encodeToString(cipher.doFinal(("from " + sender).getBytes())));
         //writer.write(Base64.getEncoder().encodeToString(cipher.doFinal(("to " + recipsString).getBytes())));
