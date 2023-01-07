@@ -202,21 +202,22 @@ public class MessageClient implements IMessageClient, Runnable {
     public void verify(String id) {
         Mail email = new Mail();
         try{
-            dmapWriter.println(encrypt("show" + id));
+            dmapWriter.println(encrypt("show " + id));
             String response = decrypt(dmapReader.readLine());
+            response = response.substring(0,response.length()-2);
 
             if(response.startsWith("error")) shell.out().println(response);
             else {
-                String[] emailParts = response.split(System.lineSeparator());
-
+                String[] emailParts = response.split("\n\r");
                 email.setSender(emailParts[0].substring(5));
-                email.setRecipients(email.recipientsToArray(emailParts[0].substring(3)));
+                String recipients = emailParts[1].substring(3);
+                email.setRecipients(email.recipientsToArray(recipients));
                 email.setSubject(emailParts[2].substring(8));
                 email.setData(emailParts[3].substring(5));
-                email.setHash(emailParts[4].substring(5));
+                if(emailParts[4].length() > "hash".length()) email.setHash(emailParts[4].substring(5));
+                else email.setHash(null);
 
                 String checkHash = findHash(email);
-
                 if(email.getHash() == null) shell.out().println("error no hash attached");
                 else if(checkHash == null) shell.out().println("error while calculating hash");
                 else{
@@ -227,7 +228,6 @@ public class MessageClient implements IMessageClient, Runnable {
                  IllegalBlockSizeException | IOException e) {
             shutdown();
         }
-
     }
 
     @Command
