@@ -103,7 +103,7 @@ public class Mail {
         cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, ivParameterSpec);
 
         String hashline;
-        if(hash != null && !hash.equals("null")) hashline = "hash" + hash;
+        if(hash != null && !hash.equals("null")) hashline = "hash " + hash;
         else hashline = "hash";
 
         writer.println(Base64.getEncoder().encodeToString(cipher.doFinal(("from " + sender + "\n\r" + "to " + recipientsToString() +
