@@ -126,6 +126,7 @@ public class DMAPHandler implements Runnable{
                         } else {
                             tempMail.toString(writer);
                         }
+                        //write("ok");
                         break;
                     case "list":
                         if (!logged) {

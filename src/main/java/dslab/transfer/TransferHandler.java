@@ -39,7 +39,7 @@ public class TransferHandler implements Runnable{
             reader = new Reader(socket.getInputStream());
             writer = new Writer(socket.getOutputStream());
             String msg = "";
-            writer.write("ok DMTP");
+            writer.write("ok DMTP2.0");
             while (serverUp) {
                 try {
                     msg = reader.read();
@@ -139,6 +139,18 @@ public class TransferHandler implements Runnable{
                         validMail[2] = true;
                         writer.write("ok");
                         break;
+                    case "hash":
+                        if (!beginBool) {
+                            writer.write("error no begin");
+                            break;
+                        }
+                        //if(msgSplit.length < 2) {
+                          //  writer.write("error no hash");
+                           // break;
+                        //}
+                        tempMail.setHash(msgSplit[1]);
+                        writer.write("ok");
+                        break;
                     case "send":
                         if (!beginBool) {
                             writer.write("error no begin");
@@ -193,6 +205,7 @@ public class TransferHandler implements Runnable{
         tempMail.setRecipients(null);
         tempMail.setSubject(null);
         tempMail.setData(null);
+        tempMail.setHash(null);
     }
 
     private boolean checkDomains(String email) {

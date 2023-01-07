@@ -29,6 +29,7 @@ public class TransferClient implements Runnable {
         this.tempMail.setSender(mail.getSender());
         this.tempMail.setSubject(mail.getSubject());
         this.tempMail.setData(mail.getData());
+        this.tempMail.setHash(mail.getHash());
         ArrayList<String> tempRec = new ArrayList<>();
         tempRec.add(s);
         tempMail.setRecipients(tempRec);
@@ -66,7 +67,7 @@ public class TransferClient implements Runnable {
     }
 
     private void talkToServer(String recipient) throws IOException {
-        if(!readAndCompareResponse("ok DMTP")) return;
+        if(!readAndCompareResponse("ok DMTP2.0")) return;
         writer.write("begin");
         if(!readAndCompareResponse("ok")) return;
         writer.write("to " + recipient);
@@ -76,6 +77,8 @@ public class TransferClient implements Runnable {
         writer.write("subject " + tempMail.getSubject());
         if(!readAndCompareResponse("ok")) return;
         writer.write("data " + tempMail.getData());
+        if(!readAndCompareResponse("ok")) return;
+        writer.write("hash " + tempMail.getHash());
         if(!readAndCompareResponse("ok")) return;
         writer.write("send");
         if(!readAndCompareResponse("ok")) return;

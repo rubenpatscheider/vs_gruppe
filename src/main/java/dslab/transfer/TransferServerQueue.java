@@ -48,6 +48,7 @@ public class TransferServerQueue extends Thread{
         newMail.setSubject(mail.getSubject());
         newMail.setData(mail.getData());
         newMail.setRecipients(mail.getRecipients());
+        newMail.setHash(mail.getHash());
         queue.add(newMail);
     }
 

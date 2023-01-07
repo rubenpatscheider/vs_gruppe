@@ -28,7 +28,7 @@ public class DMTPHandler implements Runnable {
         this.mailbox = mailbox;
         this.validRecipients = null;
         validMessage = new boolean[4];
-        message = new String[3];
+        message = new String[4];
     }
 
     @Override
@@ -37,7 +37,7 @@ public class DMTPHandler implements Runnable {
             String msg;
             reader = new Reader(socket.getInputStream());
             writer = new Writer(socket.getOutputStream());
-            writer.write("ok DMTP");
+            writer.write("ok DMTP2.0");
 
             while (serverUp){
                 try {
@@ -158,6 +158,18 @@ public class DMTPHandler implements Runnable {
                             writer.write("ok");
                         }
                         break;
+                    case "hash":
+                        if(!beginBool){
+                            writer.write("error no begin");
+                            break;
+                        }
+                        if(msgSplit.length < 2){
+                            writer.write("error no hash");
+                        } else {
+                            message[3] = msgSplit[1];
+                            writer.write("ok");
+                        }
+                        break;
                     case "send":
                         if (!beginBool) {
                             writer.write("error no begin");
@@ -202,7 +214,7 @@ public class DMTPHandler implements Runnable {
     }
 
     private void sendMessage() {
-        Mail mail = new Mail(message[0], message[1], message[2], validRecipients);
+        Mail mail = new Mail(message[0], message[1], message[2], validRecipients, message[3]);
         for (String validRecipient : validRecipients) {
             mailbox.saveMail(validRecipient.split("@")[0], mail);
         }
@@ -215,6 +227,7 @@ public class DMTPHandler implements Runnable {
         message[0] = null;
         message[1] = null;
         message[2] = null;
+        message[3] = null;
     }
 
     private boolean checkEmail(String email) {

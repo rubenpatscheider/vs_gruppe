@@ -7,23 +7,16 @@ import dslab.ComponentFactory;
 import dslab.Mail;
 import dslab.util.Config;
 import dslab.util.Keys;
-import dslab.util.Reader;
-import dslab.util.Writer;
 
 import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
 import java.net.Socket;
-import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.*;
 import java.util.*;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
+import dslab.util.Reader;
+import dslab.util.Writer;
 
 public class MessageClient implements IMessageClient, Runnable {
 
@@ -34,8 +27,8 @@ public class MessageClient implements IMessageClient, Runnable {
     private Shell shell;
     private Socket dmapSocket = null;
     private Socket dmtpSocket = null;
-    private BufferedReader reader = null;
-    private PrintWriter writer = null;
+    private BufferedReader dmapReader = null;
+    private PrintWriter dmapWriter = null;
     private Cipher cipherAES;
     private SecretKeySpec secretKeySpec;
     private IvParameterSpec ivParameterSpec;
@@ -64,16 +57,16 @@ public class MessageClient implements IMessageClient, Runnable {
             String response;
             dmapSocket = new Socket(config.getString("mailbox.host"), config.getInt("mailbox.port"));
             //dmtpSocket = new Socket(config.getString("transfer.host"), config.getInt("transfer.port"));
-            reader = new BufferedReader(new InputStreamReader(dmapSocket.getInputStream()));
-            writer = new PrintWriter(dmapSocket.getOutputStream(), true);
+            dmapReader = new BufferedReader(new InputStreamReader(dmapSocket.getInputStream()));
+            dmapWriter = new PrintWriter(dmapSocket.getOutputStream(), true);
 
-            response = reader.readLine();
+            response = dmapReader.readLine();
             if(!response.equals("ok DMAP2.0")) {
                 shutdown();
             }
 
-            writer.println("startsecure");
-            response = reader.readLine();
+            dmapWriter.println("startsecure");
+            response = dmapReader.readLine();
             String[] msgSplit = response.split("\\s");
 
             if(!msgSplit[0].equals("ok") && msgSplit.length != 2) {
@@ -103,26 +96,26 @@ public class MessageClient implements IMessageClient, Runnable {
             c.init(Cipher.ENCRYPT_MODE, key);
             //c.doFinal(Base64.getDecoder().decode(answer));
             //System.out.println(Base64.getEncoder().encodeToString(c.doFinal(Base64.getDecoder().decode(answer))));
-            writer.println(Base64.getEncoder().encodeToString(c.doFinal(answer.getBytes())));
+            dmapWriter.println(Base64.getEncoder().encodeToString(c.doFinal(answer.getBytes())));
 
             cipherAES = Cipher.getInstance("AES/CTR/NoPadding");
             secretKeySpec = new SecretKeySpec(keyUser, "AES");
             ivParameterSpec = new IvParameterSpec(iv);
             cipherAES.init(Cipher.DECRYPT_MODE, secretKeySpec, ivParameterSpec);
 
-            response = reader.readLine();
+            response = dmapReader.readLine();
             response = new String(cipherAES.doFinal(Base64.getDecoder().decode(response)));
             byte[] challengeServer = Base64.getDecoder().decode(response.split(" ")[1]);
 
             if (Arrays.equals(challenge,challengeServer)) {
-                writer.println(encrypt("ok"));
+                dmapWriter.println(encrypt("ok"));
             } else {
                 shutdown();
             }
 
-            writer.println(encrypt("login " + config.getString("mailbox.user") + " " + config.getString("mailbox.password")));
+            dmapWriter.println(encrypt("login " + config.getString("mailbox.user") + " " + config.getString("mailbox.password")));
 
-            response = decrypt(reader.readLine());
+            response = decrypt(dmapReader.readLine());
             if (!response.equals("ok")) {
                 shutdown();
             }
@@ -150,12 +143,11 @@ public class MessageClient implements IMessageClient, Runnable {
     @Command
     @Override
     public void inbox() {
-        //list+show
         try {
             List<String> index = new ArrayList<String>();
 
-            writer.println(encrypt("list"));
-            String input = decrypt(reader.readLine());
+            dmapWriter.println(encrypt("list"));
+            String input = decrypt(dmapReader.readLine());
 
             if(input.split(" ")[0].equals("error")) {
                 shell.out().println(input);
@@ -173,9 +165,9 @@ public class MessageClient implements IMessageClient, Runnable {
             }
 
             for (String i : index) {
-                writer.println(encrypt("show " + i));
+                dmapWriter.println(encrypt("show " + i));
 
-                String show = decrypt(reader.readLine());
+                String show = decrypt(dmapReader.readLine());
                 shell.out().println(i + "\r\n" + show);
             }
 
@@ -195,23 +187,113 @@ public class MessageClient implements IMessageClient, Runnable {
     @Command
     @Override
     public void delete(String id) {
-
+        try{
+            dmapWriter.println(encrypt("delete " + id));
+            shell.out().println(decrypt(dmapReader.readLine()));
+        } catch (InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException |
+                 InvalidKeyException | IOException e) {
+            shutdown();
+        }
     }
 
     @Command
     @Override
     public void verify(String id) {
-        //calculate and compare
+        Mail email = new Mail();
+        try{
+            dmapWriter.println(encrypt("show" + id));
+            String response = decrypt(dmapReader.readLine());
+
+            if(response.startsWith("error")) shell.out().println(response);
+            else {
+                String[] emailParts = response.split(System.lineSeparator());
+
+                email.setSender(emailParts[0].substring(5));
+                email.setRecipients(email.recipientsToArray(emailParts[0].substring(3)));
+                email.setSubject(emailParts[2].substring(8));
+                email.setData(emailParts[3].substring(5));
+                email.setHash(emailParts[4].substring(5));
+
+                String checkHash = findHash(email);
+
+                if(email.getHash() == null) shell.out().println("error no hash attached");
+                else if(checkHash == null) shell.out().println("error while calculating hash");
+                else{
+                    shell.out().println((email.getHash().equals(checkHash)) ? "ok" : "error" );
+                }
+            }
+        } catch (InvalidAlgorithmParameterException | InvalidKeyException | BadPaddingException |
+                 IllegalBlockSizeException | IOException e) {
+            shutdown();
+        }
 
     }
 
     @Command
     @Override
     public void msg(String to, String subject, String data) {
-        //send
-        //create and attach hash
-        //encode hash to ascii format
-        // use Base64 binary-to-text
+        Mail mail = new Mail();
+        mail.setSender(config.getString("transfer.email"));
+        mail.setRecipients(mail.recipientsToArray(to));
+        mail.setSubject(subject);
+        mail.setData(data);
+        mail.setHash(findHash(mail));
+
+        try {
+            dmtpSocket = new Socket(config.getString("transfer.host"), config.getInt("transfer.port"));
+            Reader dmtpReader = new Reader(dmtpSocket.getInputStream());
+            Writer dmtpWriter = new Writer(dmtpSocket.getOutputStream());
+
+            String response = dmtpReader.read();
+            if(!response.equals("ok DMTP2.0")) throw new Exception();
+
+            dmtpWriter.write("begin");
+            response = dmtpReader.read();
+            if(!response.equals("ok")) throw new Exception();
+
+            dmtpWriter.write("from " + config.getString("transfer.email"));
+            response = dmtpReader.read();
+            if(!response.equals("ok")) throw new Exception();
+
+            dmtpWriter.write("to " + to);
+            response = dmtpReader.read();
+            if(!response.equals("ok")) throw new Exception();
+
+            dmtpWriter.write("subject " + subject);
+            response = dmtpReader.read();
+            if(!response.equals("ok")) throw new Exception();
+
+            dmtpWriter.write("data " + data);
+            response = dmtpReader.read();
+            if(!response.equals("ok")) throw new Exception();
+
+            dmtpWriter.write("hash " + mail.getHash());
+            response = dmtpReader.read();
+            if(!response.equals("ok")) throw new Exception();
+
+            dmtpWriter.write("send");
+            response = dmtpReader.read();
+            if(!response.equals("ok")) throw new Exception();
+
+            dmtpWriter.write("quit");
+            response = dmtpReader.read();
+            if(!response.equals("ok bye")) throw new Exception();
+
+            shell.out().println("ok");
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if(dmtpSocket != null){
+                try{
+                    dmtpSocket.close();
+                } catch (IOException ignored) {
+
+                }
+            }
+        }
     }
 
     @Command
@@ -224,8 +306,8 @@ public class MessageClient implements IMessageClient, Runnable {
             }
         }
         try {
-            reader.close();
-            writer.close();
+            dmapReader.close();
+            dmapWriter.close();
         } catch (IOException e) {
             throw new UncheckedIOException("IOException MessageClient", e);
         }
@@ -241,6 +323,20 @@ public class MessageClient implements IMessageClient, Runnable {
     private String decrypt(String input) throws IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException, InvalidKeyException {
         cipherAES.init(Cipher.DECRYPT_MODE, secretKeySpec, ivParameterSpec);
         return new String(cipherAES.doFinal(Base64.getDecoder().decode(input)));
+    }
+
+    private String findHash(Mail mail) {
+        try {
+            SecretKeySpec keySpec = Keys.readSecretKey(new File("./keys/hmac.key"));
+            Mac hmac = Mac.getInstance("HmacSHA256");
+            hmac.init(keySpec);
+            String msg = String.join("\n", mail.getSender(), mail.recipientsToString(), mail.getSubject(), mail.getData());
+            byte[] hash = hmac.doFinal(msg.getBytes());
+            return Base64.getEncoder().encodeToString(hash);
+        } catch (IOException | NoSuchAlgorithmException | InvalidKeyException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     public static void main(String[] args) throws Exception {
