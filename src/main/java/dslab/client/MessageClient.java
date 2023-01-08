@@ -211,12 +211,12 @@ public class MessageClient implements IMessageClient, Runnable {
             if(response.startsWith("error")) shell.out().println(response);
             else {
                 String[] emailParts = response.split("\n\r");
-                email.setSender(emailParts[0].substring(5));
-                String recipients = emailParts[1].substring(3);
+                email.setSender(emailParts[0].substring(5).trim());
+                String recipients = emailParts[1].substring(3).trim();
                 email.setRecipients(email.recipientsToArray(recipients));
-                email.setSubject(emailParts[2].substring(8));
-                email.setData(emailParts[3].substring(5));
-                if(emailParts[4].length() > "hash".length()) email.setHash(emailParts[4].substring(5));
+                email.setSubject(emailParts[2].substring(8).trim());
+                email.setData(emailParts[3].substring(5).trim());
+                if(emailParts[4].length() > "hash".length()) email.setHash(emailParts[4].substring(5).trim());
                 else email.setHash(null);
 
                 String checkHash = findHash(email);
