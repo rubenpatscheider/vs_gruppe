@@ -222,9 +222,7 @@ public class MessageClient implements IMessageClient, Runnable {
                 String checkHash = findHash(email);
                 if(email.getHash() == null) shell.out().println("error no hash attached");
                 else if(checkHash == null) shell.out().println("error while calculating hash");
-                else{
-                    shell.out().println((email.getHash().equals(checkHash)) ? "ok" : "error" );
-                }
+                else shell.out().println((email.getHash().equals(checkHash)) ? "ok" : "error" );
             }
         } catch (InvalidAlgorithmParameterException | InvalidKeyException | BadPaddingException |
                  IllegalBlockSizeException | IOException e) {
@@ -334,9 +332,10 @@ public class MessageClient implements IMessageClient, Runnable {
 
     private String findHash(Mail mail) {
         try {
-            SecretKeySpec keySpec = Keys.readSecretKey(new File("./keys/hmac.key"));
+            File keyFile = new File("keys/hmac.key");
+            SecretKeySpec secretKey = Keys.readSecretKey(keyFile);
             Mac hmac = Mac.getInstance("HmacSHA256");
-            hmac.init(keySpec);
+            hmac.init(secretKey);
             String msg = String.join("\n", mail.getSender(), mail.recipientsToString(), mail.getSubject(), mail.getData());
             byte[] hash = hmac.doFinal(msg.getBytes());
             return Base64.getEncoder().encodeToString(hash);
